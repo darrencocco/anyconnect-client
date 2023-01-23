@@ -1,0 +1,85 @@
+#!/bin/bash
+
+function usage {
+  echo "Usage:
+  -g  Domain name of the VPN login/gateway (mandatory)
+  -n  Identifier name for the connection
+  -r  CIDR format of IPv4 subnets to route (can be used repeatedly for multiple subnets)"
+  exit
+}
+
+function launch {
+  CONTAINER_NAME=anyconnect-client
+  if [ -v CONNECTION_NAME ]; then
+    CONTAINER_NAME+="-${CONNECTION_NAME}"
+  fi
+  
+  # TODO: Detect if the container is already running.
+  
+  # TODO: check for available ports for binding.
+  
+  su -c "docker run --detach --cap-add=NET_ADMIN --cap-add=SYS_ADMIN --device /dev/net/tun --sysctl net.ipv4.ip_forward=1 -p 5900:5900 --name ${CONTAINER_NAME} --rm anyconnect-client"
+
+  CONTAINER_IP=`docker exec ${CONTAINER_NAME} ip -4 -o address show dev eth0|sed -E 's/^.*\s([[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3})\/[[:digit:]]+.*$/\1/'`
+  
+  DEFAULT_GATEWAY=`ip route | grep default | sed -E 's/^.*via\s([[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3})\s.*$/\1/'`
+
+  su -c "ip route add $VPN_CONCENTRATOR via $DEFAULT_GATEWAY"
+
+  if [ -v VPN_SUBNETS ]; then
+    for SUBNET in "${VPN_SUBNETS[@]}"; do
+      su -c "ip route add $SUBNET via $CONTAINER_IP"
+    done
+  fi
+
+  # TODO: Maybe something to do with DNS here as well?
+  
+  # TODO: Create tracker file to record routes for cleanup.
+
+  # Finally, open the browser.
+  su -c "SUDO_USER" -c 'xdg-open http://localhost:5900/vnc.html &'
+}
+
+function tear_down {
+  echo "NOT IMPLEMENTED"
+  # TODO: Write cleanup function.
+  exit
+}
+
+VPN_SUBNETS=()
+
+while getopts :hn:r:g:d options; do
+  case ${options} in
+    h)
+      usage
+      ;;
+    n)
+      CONNECTION_NAME="${OPTARG}"
+      ;;
+    r)
+      VPN_SUBNETS+=("${OPTARG}")
+      ;;
+    g)
+      VPN_CONCENTRATOR=`dig +short "${OPTARG}" | tail -n1`
+      ;;
+    d)
+      TEAR_DOWN=true
+      ;;
+    :)
+      usage
+      ;;
+    ?)
+      usage
+      ;;
+  esac
+done
+
+if [ -v TEAR_DOWN ]; then
+  tear_down
+fi
+
+if [ ! -v VPN_CONCENTRATOR ]; then
+  usage
+fi
+
+launch
