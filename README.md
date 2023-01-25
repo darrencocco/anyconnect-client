@@ -1,5 +1,5 @@
-Cisco AnyConnect Client isolated container.
-###########################################
+### Cisco AnyConnect Client isolated container.
+
 
 This allows you to run Cisco AnyConnect client in an isolated docker or podman container
 in a way that doesn't allow it to interfere with your local routing, firewall and DNS.
@@ -15,4 +15,5 @@ You will need to provide your own copy of the AnyConnect installer script (in th
 directory as the Dockerfile) when you build it.
 Build with it with `docker build -t anyconnect-client .`
 
-P.S. It currently does not support running multiple clients at the same time.
+P.S. It currently does not support running multiple clients at the same time and it
+only works with a Linux host.
