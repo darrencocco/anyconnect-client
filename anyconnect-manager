@@ -4,7 +4,10 @@ function usage {
   echo "Usage:
   -g  Domain name of the VPN login/gateway (mandatory)
   -n  Identifier name for the connection
-  -r  CIDR format of IPv4 subnets to route (can be used repeatedly for multiple subnets)"
+  -r  CIDR format of IPv4 subnets to route (can be used repeatedly for multiple subnets)
+Examples:
+  (start)    $ sudo anyconnect-manager -n example -g vpn.example.com -r 10.190.0.0/16 -r 10.24.0.0/16 -r 10.21.0.0/16
+  (teardown) $ sudo anyconnect-manager -n example -g vpn.example.com -r 10.190.0.0/16 -r 10.24.0.0/16 -r 10.21.0.0/16 -d"
   exit
 }
 
@@ -41,9 +44,20 @@ function launch {
 }
 
 function tear_down {
-  echo "NOT IMPLEMENTED"
-  # TODO: Write cleanup function.
-  exit
+  CONTAINER_NAME=anyconnect-client
+  if [ -v CONNECTION_NAME ]; then
+    CONTAINER_NAME+="-${CONNECTION_NAME}"
+  fi
+  
+  su -c "docker kill ${CONTAINER_NAME}"
+  
+  su -c "ip route del $VPN_CONCENTRATOR"
+
+  if [ -v VPN_SUBNETS ]; then
+    for SUBNET in "${VPN_SUBNETS[@]}"; do
+      su -c "ip route del $SUBNET"
+    done
+  fi
 }
 
 VPN_SUBNETS=()
@@ -76,6 +90,7 @@ done
 
 if [ -v TEAR_DOWN ]; then
   tear_down
+  exit
 fi
 
 if [ ! -v VPN_CONCENTRATOR ]; then
