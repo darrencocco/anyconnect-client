@@ -11,6 +11,8 @@ Please note that the anyconnect-manager MUST be run with sudo to work correctly.
 A HTTP server is used to provide the interface to the AnyConnect client, it defaults
 to http://localhost:5900/.
 
+It provides a SOCKS5 proxy on localhost:1080 which you can then tunnel your requests through.
+
 You will need to provide your own copy of the AnyConnect installer script (in the same
 directory as the Dockerfile) when you build it.
 Build with it with `docker build -t anyconnect-client .`

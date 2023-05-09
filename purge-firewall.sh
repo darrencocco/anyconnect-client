@@ -1,8 +1,13 @@
 #!/bin/bash
+FIREWALL_COUNT=`iptables -L|wc -l`
 while true
 do
-  watch -n 10  -g 'iptables -L|wc -l'
-  iptables -F ciscovpn
-  iptables -F ciscovpnfinal
-  iptables -F ciscovpnfw
+  LATEST_COUNT=`iptables -L|wc -l`
+  if [ $FIREWALL_COUNT -ne $LATEST_COUNT ]; then
+    iptables -F ciscovpn
+    iptables -F ciscovpnfinal
+    iptables -F ciscovpnfw
+    FIREWALL_COUNT=`iptables -L|wc -l`
+  fi
+  sleep 10s
 done
