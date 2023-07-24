@@ -20,7 +20,7 @@ function launch {
   
   # TODO: check for available ports for binding.
   
-  su -c "docker run --detach --cap-add=NET_ADMIN --cap-add=SYS_ADMIN --device /dev/net/tun -p 5900:5900 -p 1080:1080 --name ${CONTAINER_NAME} --rm anyconnect-client"
+  su -c "docker run --detach --cap-add=NET_ADMIN --cap-add=SYS_ADMIN --device /dev/net/tun -p 5900:5900 -p 1080:1080 -p 5901:5901 --name ${CONTAINER_NAME} --rm anyconnect-client"
 }
 
 function tear_down {
